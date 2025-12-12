@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dynamic Quote Generator</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <header class="header">
+      <h1>Dynamic Quote Generator</h1>
+      <div class="controls-top">
+        <label for="categoryFilter">Category</label>
+        <select id="categoryFilter">
+          <option value="all">All Categories</option>
+        </select>
+
+        <button id="newQuoteBtn" class="btn">Show New Quote</button>
+        <button id="exportBtn" class="btn">Export JSON</button>
+        <input id="importFile" type="file" accept=".json" aria-label="Import JSON file" />
+      </div>
+    </header>
+
+    <section id="quoteSection" class="quote-section">
+      <div id="quoteDisplay" class="quote-display">
+        <p id="quoteText" class="quote-text">No quotes yet. Add a quote to get started.</p>
+        <p id="quoteMeta" class="quote-meta"></p>
+      </div>
+    </section>
+
+    <section class="add-section">
+      <h2>Add a New Quote</h2>
+      <form id="addQuoteForm" class="form">
+        <div class="form-row">
+          <input id="newQuoteText" type="text" placeholder="Enter a new quote" required />
+        </div>
+        <div class="form-row">
+          <input id="newQuoteCategory" type="text" placeholder="Enter quote category (e.g., inspiration)" required />
+        </div>
+        <div class="form-row actions">
+          <button type="submit" class="btn">Add Quote</button>
+          <button type="button" id="clearLocalBtn" class="btn ghost">Reset Local Data</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="list-section">
+      <h2>Quotes (filtered view)</h2>
+      <ul id="quoteList" class="quote-list"></ul>
+    </section>
+
+    <div id="notification" class="notification" aria-live="polite"></div>
+
+    <footer class="footer">
+      <p>Last viewed quote stored in session storage. Local quotes persist in localStorage.</p>
+    </footer>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
