@@ -3,6 +3,8 @@
  ***********************/
 let quoteDisplay = document.getElementById("quoteDisplay");
 
+let selectedCategory = localStorage.getItem("selectedCategory") || "all";
+
 let quotes = JSON.parse(localStorage.getItem("quotes")) || [
   { text: "Stay hungry, stay foolish.", category: "Motivation" },
   { text: "Learning never exhausts the mind.", category: "Education" }
@@ -20,7 +22,15 @@ function saveQuotes() {
  ***********************/
 function showRandomQuote() {
   if (quotes.length === 0) return;
-  const q = quotes[Math.floor(Math.random() * quotes.length)];
+
+  let filteredQuotes =
+    selectedCategory === "all"
+      ? quotes
+      : quotes.filter(q => q.category === selectedCategory);
+
+  const q =
+    filteredQuotes[Math.floor(Math.random() * filteredQuotes.length)];
+
   quoteDisplay.textContent = `"${q.text}" — ${q.category}`;
 }
 
@@ -69,29 +79,16 @@ function populateCategories() {
     filter.appendChild(option);
   });
 
-  const saved = localStorage.getItem("lastCategory");
-  if (saved) {
-    filter.value = saved;
-    filterQuote();
-  }
+  filter.value = selectedCategory;
 }
 
 /***********************
  * FILTER QUOTES
  ***********************/
 function filterQuote() {
-  const selected = document.getElementById("categoryFilter").value;
-  localStorage.setItem("lastCategory", selected);
-
-  let filtered =
-    selected === "all"
-      ? quotes
-      : quotes.filter(q => q.category === selected);
-
-  if (filtered.length > 0) {
-    quoteDisplay.textContent =
-      `"${filtered[0].text}" — ${filtered[0].category}`;
-  }
+  selectedCategory = document.getElementById("categoryFilter").value;
+  localStorage.setItem("selectedCategory", selectedCategory);
+  showRandomQuote();
 }
 
 /***********************
@@ -101,8 +98,8 @@ function exportToJsonFile() {
   const blob = new Blob([JSON.stringify(quotes, null, 2)], {
     type: "application/json"
   });
-  const url = URL.createObjectURL(blob);
 
+  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
   a.download = "quotes.json";
@@ -127,21 +124,23 @@ function importFromJsonFile(event) {
 }
 
 /***********************
- * MOCK SERVER FETCH
+ * MOCK SERVER (ASYNC / AWAIT)
  ***********************/
-function fetchQuotesFromServer() {
-  return fetch("https://jsonplaceholder.typicode.com/posts?_limit=2")
-    .then(res => res.json())
-    .then(data =>
-      data.map(item => ({
-        text: item.title,
-        category: "Server"
-      }))
-    );
+async function fetchQuotesFromServer() {
+  const response = await fetch(
+    "https://jsonplaceholder.typicode.com/posts?_limit=2"
+  );
+
+  const data = await response.json();
+
+  return data.map(item => ({
+    text: item.title,
+    category: "Server"
+  }));
 }
 
-function postQuoteToServer(quote) {
-  return fetch("https://jsonplaceholder.typicode.com/posts", {
+async function postQuoteToServer(quote) {
+  await fetch("https://jsonplaceholder.typicode.com/posts", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(quote)
@@ -151,22 +150,21 @@ function postQuoteToServer(quote) {
 /***********************
  * SYNC QUOTES
  ***********************/
-function syncQuotes() {
-  fetchQuotesFromServer().then(serverQuotes => {
-    let updated = false;
+async function syncQuotes() {
+  const serverQuotes = await fetchQuotesFromServer();
+  let updated = false;
 
-    serverQuotes.forEach(sq => {
-      if (!quotes.some(q => q.text === sq.text)) {
-        quotes.push(sq);
-        updated = true;
-      }
-    });
-
-    if (updated) {
-      saveQuotes();
-      showUpdateNotice();
+  serverQuotes.forEach(serverQuote => {
+    if (!quotes.some(q => q.text === serverQuote.text)) {
+      quotes.push(serverQuote);
+      updated = true;
     }
   });
+
+  if (updated) {
+    saveQuotes();
+    showUpdateNotice();
+  }
 }
 
 /***********************
@@ -179,9 +177,12 @@ setInterval(syncQuotes, 20000);
  ***********************/
 function showUpdateNotice() {
   const notice = document.getElementById("updateNotice");
-  notice.textContent = "Quotes updated from server.";
+  notice.textContent = "Quotes synced from server.";
   notice.style.display = "block";
-  setTimeout(() => (notice.style.display = "none"), 3000);
+
+  setTimeout(() => {
+    notice.style.display = "none";
+  }, 3000);
 }
 
 /***********************
